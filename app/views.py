@@ -1,7 +1,22 @@
-from django.shortcuts import render
-from celery_project.celery import debug_task
+from django.shortcuts import render, redirect
 
-# Create your views here.
+from .models import Images
+from .tasks import generate_image
+
+
 def index(request):
-    debug_task.delay()
-    return render(request,"index.html")
+    if request.method == "POST":
+        prompt = request.POST.get("prompt")
+        print(prompt)
+
+        generate_image.delay(prompt)
+
+        return redirect("index")
+    print(Images.objects.order_by("-create_date"))
+    return render(
+        request,
+        "index.html",
+        {
+            "images": Images.objects.order_by("-create_date")
+        },
+    )
